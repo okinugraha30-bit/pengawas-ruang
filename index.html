@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <!-- DASHBOARD PENGAWAS RUANGAN (TANPA FORCE SUBMIT, TANPA IMPORT, TANPA JEDA/LANJUT) -->
+    <!-- DASHBOARD PENGAWAS RUANGAN -->
     <div id="dashboardSection" class="hidden">
         <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50">
             <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
@@ -73,9 +73,12 @@
                 </div>
             </div>
 
+            <!-- FILTER RUANGAN & PENCARIAN -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                    <!-- Pengawas Ruangan tetap bisa memfilter berdasarkan ruangan jika data sempat tersinkron/masuk dari log -->
+                    <select id="roomFilter" onchange="renderTable()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none">
+                        <option value="ALL">Semua Ruangan</option>
+                    </select>
                     <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama siswa..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none w-full md:w-64">
                 </div>
             </div>
@@ -99,8 +102,8 @@
 
     <script>
         const AUTH_USER = "pengawas";
-        const AUTH_PASS = "cbtbro";
-        let studentLogs = {}, pubnub = null;
+        const AUTH_PASS = "ruangan123";
+        let studentLogs = {}, availableRooms = new Set(), pubnub = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('isRoomPengawasLoggedIn') === 'true') showDashboard();
@@ -137,25 +140,51 @@
 
         function handleIncomingViolation(data) {
             const sName = data.studentName;
+            // Jika payload mengirimkan data ruangan (bisa disesuaikan jika dikirim dari script siswa/proctor), gunakan itu. Jika tidak, default "Ruang Ujian".
+            const sRoom = data.roomName || "Ruang Ujian";
+
             if (!studentLogs[sName]) {
-                studentLogs[sName] = { name: sName, room: "Ruang Ujian", reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
+                studentLogs[sName] = { name: sName, room: sRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
             } else {
                 studentLogs[sName].reason = data.reason;
                 studentLogs[sName].count = data.count;
                 studentLogs[sName].time = data.timestamp;
                 if (studentLogs[sName].status !== "FORCE_SUBMITTED") studentLogs[sName].status = "LOCKED";
             }
+
+            // Tambahkan ke dropdown filter ruangan secara dinamis jika ada ruangan baru
+            if (sRoom && !availableRooms.has(sRoom)) {
+                availableRooms.add(sRoom);
+                updateRoomFilterDropdown();
+            }
+
             updateStats(); renderTable();
+        }
+
+        function updateRoomFilterDropdown() {
+            const selectEl = document.getElementById('roomFilter');
+            const currentVal = selectEl.value;
+            selectEl.innerHTML = `<option value="ALL">Semua Ruangan</option>`;
+            availableRooms.forEach(r => {
+                selectEl.innerHTML += `<option value="${r}">${r}</option>`;
+            });
+            selectEl.value = currentVal;
         }
 
         function renderTable() {
             const tbody = document.getElementById('violationTableBody');
             if (!tbody) return;
             const searchVal = document.getElementById('searchInput').value.toLowerCase();
-            const logsArray = Object.values(studentLogs).filter(i => i.name.toLowerCase().includes(searchVal));
+            const roomVal = document.getElementById('roomFilter').value;
+
+            const logsArray = Object.values(studentLogs).filter(i => {
+                const matchSearch = i.name.toLowerCase().includes(searchVal);
+                const matchRoom = (roomVal === "ALL" || i.room === roomVal);
+                return matchSearch && matchRoom;
+            });
 
             if (logsArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500">Belum ada log pelanggaran terdeteksi.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500">Belum ada log pelanggaran terdeteksi pada filter ini.</td></tr>`;
                 return;
             }
 
@@ -187,11 +216,15 @@
         }
 
         function exportToExcel() {
-            const data = Object.values(studentLogs).map((i, idx) => ({ "No": idx + 1, "Nama Siswa": i.name, "Ruangan": i.room, "Pelanggaran": i.reason, "Jumlah": i.count, "Waktu": i.time, "Status": i.status }));
-            if (!data.length) { alert("Tidak ada data!"); return; }
+            const roomVal = document.getElementById('roomFilter').value;
+            const data = Object.values(studentLogs)
+                .filter(i => roomVal === "ALL" || i.room === roomVal)
+                .map((i, idx) => ({ "No": idx + 1, "Nama Siswa": i.name, "Ruangan": i.room, "Pelanggaran": i.reason, "Jumlah": i.count, "Waktu": i.time, "Status": i.status }));
+            
+            if (!data.length) { alert("Tidak ada data untuk diexport!"); return; }
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Log");
-            XLSX.writeFile(wb, "Log_Pelanggaran_Pengawas_Ruangan.xlsx");
+            XLSX.writeFile(wb, `Log_Pelanggaran_Ruangan_${roomVal}.xlsx`);
         }
     </script>
 </body>
