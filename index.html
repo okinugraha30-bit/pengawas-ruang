@@ -22,16 +22,14 @@
                 <h2 class="text-2xl font-bold text-slate-100">Login Pengawas Ruangan</h2>
                 <p class="text-xs text-slate-400">Monitoring Real-Time Ujian Siswa</p>
             </div>
-            <form onsubmit="handleLogin(event); return false;" method="POST" class="space-y-4">
-                <input type="text" style="display:none" name="fakeusernameremembered">
-                <input type="password" style="display:none" name="fakepasswordremembered">
+            <form onsubmit="handleLogin(event)" autocomplete="off" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Username Pengawas</label>
-                    <input type="text" id="username" required autocomplete="off" data-lpignore="true" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:border-emerald-500">
+                    <input type="text" id="username" required autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:border-emerald-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Password</label>
-                    <input type="password" id="password" required autocomplete="new-password" data-lpignore="true" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:border-emerald-500">
+                    <input type="password" id="password" required autocomplete="new-password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:border-emerald-500">
                 </div>
                 <div id="loginErrorMessage" class="text-rose-400 text-xs text-center hidden font-medium">Username atau Password salah!</div>
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition shadow-lg shadow-emerald-600/30">Masuk Pengawas Ruangan</button>
@@ -51,12 +49,12 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">Export Excel</button>
-                    <label class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 cursor-pointer transition">
+                    <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm font-semibold transition">Export Excel</button>
+                    <label class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold cursor-pointer transition">
                         Import Ruangan
                         <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importExcelRuangan(event)">
                     </label>
-                    <button onclick="logoutPengawas()" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">Logout</button>
+                    <button onclick="logoutPengawas()" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-2 rounded-lg text-sm font-semibold transition">Logout</button>
                 </div>
             </div>
         </header>
@@ -159,28 +157,25 @@
         }
 
         function handleIncomingViolation(data) {
-    const rawName = data.studentName || "";
-    // Bersihkan nama secara total dari " - (Log out)" atau status sejenis
-    const cleanName = rawName.split(' - ')[0].trim();
-    const lookupKey = cleanName.toLowerCase();
-    
-    // Ambil ruangan dari map excel, atau fallback ke data, atau "Ruang Ujian"
-    const assignedRoom = studentRoomMap[lookupKey] || data.roomName || "Ruang Ujian";
+            const rawName = data.studentName || "";
+            const cleanName = rawName.split(' - ')[0].trim().replace(/\s+/g, ' ');
+            const lookupKey = cleanName.toLowerCase();
+            
+            const assignedRoom = studentRoomMap[lookupKey] || data.roomName || "Ruang Ujian";
 
-    // Simpan menggunakan cleanName sebagai key agar rapi dan tidak duplikat
-    if (!studentLogs[cleanName]) {
-        studentLogs[cleanName] = { name: cleanName, room: assignedRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
-    } else {
-        studentLogs[cleanName].room = assignedRoom;
-        studentLogs[cleanName].reason = data.reason;
-        studentLogs[cleanName].count = data.count;
-        studentLogs[cleanName].time = data.timestamp;
-        if (studentLogs[cleanName].status !== "FORCE_SUBMITTED") studentLogs[cleanName].status = "LOCKED";
-    }
-    saveData();
-    rebuildRoomDropdown();
-    updateStats(); 
-    renderTable();
+            if (!studentLogs[cleanName]) {
+                studentLogs[cleanName] = { name: cleanName, room: assignedRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
+            } else {
+                studentLogs[cleanName].room = assignedRoom;
+                studentLogs[cleanName].reason = data.reason;
+                studentLogs[cleanName].count = data.count;
+                studentLogs[cleanName].time = data.timestamp;
+                if (studentLogs[cleanName].status !== "FORCE_SUBMITTED") studentLogs[cleanName].status = "LOCKED";
+            }
+            saveData();
+            rebuildRoomDropdown();
+            updateStats(); 
+            renderTable();
         }
 
         function rebuildRoomDropdown() {
@@ -261,15 +256,21 @@
                 for (let i = 1; i < jsonData.length; i++) {
                     const row = jsonData[i];
                     if (row && row[0] && row[1]) {
-                        const sNameKey = row[0].toString().trim().toLowerCase();
-                        const sRoomName = row[1].toString().trim();
-                        studentRoomMap[sNameKey] = sRoomName;
-                        rooms.add(sRoomName);
+                        let sName = row[0].toString().trim().replace(/\s+/g, ' ');
+                        let sRoom = row[1].toString().trim();
+                        
+                        if (sName.toLowerCase().includes('ruang') && !sRoom.toLowerCase().includes('ruang')) {
+                            let temp = sName; sName = sRoom; sRoom = temp;
+                        }
+
+                        const sNameKey = sName.toLowerCase();
+                        studentRoomMap[sNameKey] = sRoom;
+                        rooms.add(sRoom);
                         
                         Object.keys(studentLogs).forEach(k => {
-                            const cleanExistingName = k.split(' - ')[0].trim().toLowerCase();
+                            const cleanExistingName = k.split(' - ')[0].trim().replace(/\s+/g, ' ').toLowerCase();
                             if (cleanExistingName === sNameKey) {
-                                studentLogs[k].room = sRoomName;
+                                studentLogs[k].room = sRoom;
                             }
                         });
                         count++;
@@ -279,7 +280,7 @@
                 rebuildRoomDropdown();
                 updateStats();
                 renderTable();
-                alert(`Berhasil impor ${count} siswa & ${rooms.size} ruangan di Pengawas! Data sekarang sinkron.`);
+                alert(`Berhasil impor ${count} siswa & ${rooms.size} ruangan di Pengawas!`);
             };
             reader.readAsArrayBuffer(file);
         }
