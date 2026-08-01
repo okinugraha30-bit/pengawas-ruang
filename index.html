@@ -159,71 +159,67 @@
         }
 
         function handleIncomingViolation(data) {
-            const sName = data.studentName;
-            const assignedRoom = studentRoomMap[sName.toLowerCase()] || data.roomName || "Ruang Ujian";
+    const rawName = data.studentName || "";
+    // Bersihkan nama dari status tambahan seperti " - (Log out)"
+    const cleanName = rawName.split(' - ')[0].trim();
+    const lookupKey = cleanName.toLowerCase();
+    
+    const assignedRoom = studentRoomMap[lookupKey] || data.roomName || "Ruang Ujian";
 
-            if (!studentLogs[sName]) {
-                studentLogs[sName] = { name: sName, room: assignedRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
-            } else {
-                studentLogs[sName].room = assignedRoom;
-                studentLogs[sName].reason = data.reason;
-                studentLogs[sName].count = data.count;
-                studentLogs[sName].time = data.timestamp;
-                if (studentLogs[sName].status !== "FORCE_SUBMITTED") studentLogs[sName].status = "LOCKED";
-            }
-            saveData();
-            rebuildRoomDropdown();
-            updateStats(); 
-            renderTable();
-        }
+    if (!studentLogs[rawName]) {
+        studentLogs[rawName] = { name: rawName, cleanName: cleanName, room: assignedRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
+    } else {
+        studentLogs[rawName].room = assignedRoom;
+        studentLogs[rawName].reason = data.reason;
+        studentLogs[rawName].count = data.count;
+        studentLogs[rawName].time = data.timestamp;
+        if (studentLogs[rawName].status !== "FORCE_SUBMITTED") studentLogs[rawName].status = "LOCKED";
+    }
+    saveData();
+    rebuildRoomDropdown();
+    updateStats(); 
+    renderTable();
+}
 
-        function rebuildRoomDropdown() {
-            const selectEl = document.getElementById('roomFilter');
-            const currentVal = selectEl.value;
-            
-            // Ambil ruangan dari mapping Excel DAN dari log yang sudah masuk
-            const rooms = new Set(Object.values(studentRoomMap));
-            Object.values(studentLogs).forEach(i => { if (i.room) rooms.add(i.room); });
-            
-            selectEl.innerHTML = `<option value="ALL">Semua Ruangan</option>`;
-            rooms.forEach(r => selectEl.innerHTML += `<option value="${r}">${r}</option>`);
-            selectEl.value = currentVal;
-        }
+function renderTable() {
+    const tbody = document.getElementById('violationTableBody');
+    if (!tbody) return;
+    const searchVal = document.getElementById('searchInput').value.toLowerCase();
+    const roomVal = document.getElementById('roomFilter').value;
 
-        function renderTable() {
-            const tbody = document.getElementById('violationTableBody');
-            if (!tbody) return;
-            const searchVal = document.getElementById('searchInput').value.toLowerCase();
-            const roomVal = document.getElementById('roomFilter').value;
+    const logsArray = Object.values(studentLogs).filter(i => {
+        const cleanName = (i.name || "").split(' - ')[0].trim();
+        const lookupKey = cleanName.toLowerCase();
+        
+        // Ambil ruangan berdasarkan pemetaan Excel yang bersih
+        const effectiveRoom = studentRoomMap[lookupKey] || i.room || "Ruang Ujian";
+        i.room = effectiveRoom; // Sinkronkan property ruangan
+        
+        const matchSearch = i.name.toLowerCase().includes(searchVal);
+        const matchRoom = (roomVal === "ALL" || effectiveRoom === roomVal);
+        return matchSearch && matchRoom;
+    });
 
-            const logsArray = Object.values(studentLogs).filter(i => {
-                const effectiveRoom = studentRoomMap[i.name.toLowerCase()] || i.room || "Ruang Ujian";
-                i.room = effectiveRoom; // Sinkronkan property ruangan
-                
-                const matchSearch = i.name.toLowerCase().includes(searchVal);
-                const matchRoom = (roomVal === "ALL" || effectiveRoom === roomVal);
-                return matchSearch && matchRoom;
-            });
+    if (logsArray.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500">Belum ada log pelanggaran terdeteksi pada filter ini.</td></tr>`;
+        return;
+    }
 
-            if (logsArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500">Belum ada log pelanggaran terdeteksi pada filter ini.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = logsArray.map((item, index) => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="p-4 font-mono text-slate-500">${index + 1}</td>
-                    <td class="p-4 font-semibold text-slate-100">${item.name}</td>
-                    <td class="p-4"><span class="bg-slate-900 px-2 py-1 rounded text-xs border border-slate-700">${item.room}</span></td>
-                    <td class="p-4 text-slate-300">${item.reason}</td>
-                    <td class="p-4 font-bold text-red-400">${item.count}x</td>
-                    <td class="p-4 font-mono text-xs text-slate-400">${item.time}</td>
-                    <td class="p-4"><span class="${item.status === 'LOCKED' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : item.status === 'FORCE_SUBMITTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'} border text-xs px-2.5 py-1 rounded-full font-semibold">${item.status}</span></td>
-                    <td class="p-4 text-center">
-                        <button onclick="unlockStudent('${item.name}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition">Buka Kunci</button>
-                    </td>
-                </tr>
-            `).join('');
+    tbody.innerHTML = logsArray.map((item, index) => `
+        <tr class="hover:bg-slate-800/50 transition">
+            <td class="p-4 font-mono text-slate-500">${index + 1}</td>
+            <td class="p-4 font-semibold text-slate-100">${item.name}</td>
+            <td class="p-4"><span class="bg-slate-900 px-2 py-1 rounded text-xs border border-slate-700">${item.room}</span></td>
+            <td class="p-4 text-slate-300">${item.reason}</td>
+            <td class="p-4 font-bold text-red-400">${item.count}x</td>
+            <td class="p-4 font-mono text-xs text-slate-400">${item.time}</td>
+            <td class="p-4"><span class="${item.status === 'LOCKED' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : item.status === 'FORCE_SUBMITTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'} border text-xs px-2.5 py-1 rounded-full font-semibold">${item.status}</span></td>
+            <td class="p-4 text-center">
+                <button onclick="unlockStudent('${item.name}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition">Buka Kunci</button>
+            </td>
+        </tr>
+    `).join('');
+}
         }
 
         function unlockStudent(name) {
@@ -247,19 +243,22 @@
                 const rooms = new Set();
                 let count = 0;
                 for (let i = 1; i < jsonData.length; i++) {
-                    const row = jsonData[i];
-                    if (row && row[0] && row[1]) {
-                        const sNameKey = row[0].toString().trim().toLowerCase();
-                        const sRoomName = row[1].toString().trim();
-                        studentRoomMap[sNameKey] = sRoomName;
-                        rooms.add(sRoomName);
-                        
-                        Object.keys(studentLogs).forEach(k => {
-                            if (k.toLowerCase() === sNameKey) {
-                                studentLogs[k].room = sRoomName;
-                            }
-                        });
-                        count++;
+    const row = jsonData[i];
+    if (row && row[0] && row[1]) {
+        const sNameKey = row[0].toString().trim().toLowerCase();
+        const sRoomName = row[1].toString().trim();
+        studentRoomMap[sNameKey] = sRoomName;
+        rooms.add(sRoomName);
+        
+        Object.keys(studentLogs).forEach(k => {
+            const cleanExistingName = k.split(' - ')[0].trim().toLowerCase();
+            if (cleanExistingName === sNameKey) {
+                studentLogs[k].room = sRoomName;
+            }
+        });
+        count++;
+    }
+}
                     }
                 }
                 saveData();
