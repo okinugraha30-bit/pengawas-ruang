@@ -92,7 +92,7 @@
                             </tr>
                         </thead>
                         <tbody id="violationTableBody" class="divide-y divide-slate-700/50">
-                            <tr><td colspan="8" class="p-8 text-center text-slate-500">Belum ada log pelanggaran terdeteksi.</td></tr>
+                            <tr><td colspan="8" class="p-8 text-center text-slate-500">Belum ada log pelanggaran terdeteksi pada filter ini.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -103,11 +103,18 @@
     <script>
         const AUTH_USER = "pengawas";
         const AUTH_PASS = "ruangan123";
-        let studentLogs = {}, availableRooms = new Set(), pubnub = null;
+        let studentLogs = JSON.parse(localStorage.getItem('cbt_student_logs')) || {};
+        let pubnub = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('isRoomPengawasLoggedIn') === 'true') showDashboard();
-            else showLogin();
+            if (localStorage.getItem('isRoomPengawasLoggedIn') === 'true') {
+                showDashboard();
+                rebuildRoomDropdown();
+                updateStats();
+                renderTable();
+            } else {
+                showLogin();
+            }
         });
 
         function showLogin() { document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('dashboardSection').classList.add('hidden'); }
@@ -118,6 +125,9 @@
             if (document.getElementById('username').value.trim() === AUTH_USER && document.getElementById('password').value.trim() === AUTH_PASS) {
                 localStorage.setItem('isRoomPengawasLoggedIn', 'true');
                 showDashboard();
+                rebuildRoomDropdown();
+                updateStats();
+                renderTable();
             } else {
                 document.getElementById('loginErrorMessage').classList.remove('hidden');
             }
@@ -130,6 +140,10 @@
             }
         }
 
+        function saveData() {
+            localStorage.setItem('cbt_student_logs', JSON.stringify(studentLogs));
+        }
+
         function initPubNub() {
             if (typeof PubNub !== 'undefined' && !pubnub) {
                 pubnub = new PubNub({ publishKey: "pub-c-5618932f-1208-4f99-81ed-334268b10f87", subscribeKey: "sub-c-a8bf0e07-65d5-4794-8564-7567ee20e659", uuid: "room_supervisor" });
@@ -140,7 +154,6 @@
 
         function handleIncomingViolation(data) {
             const sName = data.studentName;
-            // Jika payload mengirimkan data ruangan (bisa disesuaikan jika dikirim dari script siswa/proctor), gunakan itu. Jika tidak, default "Ruang Ujian".
             const sRoom = data.roomName || "Ruang Ujian";
 
             if (!studentLogs[sName]) {
@@ -151,23 +164,19 @@
                 studentLogs[sName].time = data.timestamp;
                 if (studentLogs[sName].status !== "FORCE_SUBMITTED") studentLogs[sName].status = "LOCKED";
             }
-
-            // Tambahkan ke dropdown filter ruangan secara dinamis jika ada ruangan baru
-            if (sRoom && !availableRooms.has(sRoom)) {
-                availableRooms.add(sRoom);
-                updateRoomFilterDropdown();
-            }
-
-            updateStats(); renderTable();
+            saveData();
+            rebuildRoomDropdown();
+            updateStats(); 
+            renderTable();
         }
 
-        function updateRoomFilterDropdown() {
+        function rebuildRoomDropdown() {
             const selectEl = document.getElementById('roomFilter');
             const currentVal = selectEl.value;
+            const rooms = new Set(Object.values(studentLogs).map(i => i.room));
+            
             selectEl.innerHTML = `<option value="ALL">Semua Ruangan</option>`;
-            availableRooms.forEach(r => {
-                selectEl.innerHTML += `<option value="${r}">${r}</option>`;
-            });
+            rooms.forEach(r => selectEl.innerHTML += `<option value="${r}">${r}</option>`);
             selectEl.value = currentVal;
         }
 
@@ -206,7 +215,7 @@
 
         function unlockStudent(name) {
             if (pubnub) pubnub.publish({ channel: "cbt_monitoring_channel", message: { type: "REMOTE_UNLOCK_COMMAND", targetStudent: name } });
-            if (studentLogs[name]) { studentLogs[name].status = "ACTIVE"; updateStats(); renderTable(); }
+            if (studentLogs[name]) { studentLogs[name].status = "ACTIVE"; saveData(); updateStats(); renderTable(); }
         }
 
         function updateStats() {
