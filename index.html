@@ -1,3 +1,5 @@
+Pengawas Ruangan
+
 <!DOCTYPE html>
 <html lang="id" translate="no">
 <head>
@@ -12,65 +14,72 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen" translate="no">
 
-    <!-- LOGIN PENGAWAS -->
+    <!-- LOGIN PENGAWAS RUANGAN -->
     <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 w-full max-w-md shadow-2xl space-y-6">
             <div class="text-center space-y-2">
                 <div class="inline-flex bg-emerald-600 p-3 rounded-xl mb-2">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 </div>
                 <h2 class="text-2xl font-bold text-slate-100">Login Pengawas Ruangan</h2>
-                <p class="text-xs text-slate-400">Monitoring & Kontrol Ujian per Ruangan</p>
+                <p class="text-xs text-slate-400">Monitoring Real-Time Ujian Siswa</p>
             </div>
-            <form onsubmit="handleLogin(event)" autocomplete="off" class="space-y-4">
+            <form onsubmit="handleLogin(event)" class="space-y-4" autocomplete="off">
+                <input type="text" style="display:none" name="fakeusernameremembered">
+                <input type="password" style="display:none" name="fakepasswordremembered">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Pilih Ruangan Anda</label>
-                    <select id="loginRoomSelect" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:border-emerald-500">
-                        <option value="">-- Pilih Ruangan --</option>
-                    </select>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Username Pengawas</label>
+                    <input type="text" id="username" required autocomplete="off" data-lpignore="true" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:border-emerald-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Password Ruangan</label>
-                    <input type="password" id="password" required autocomplete="new-password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:border-emerald-500">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Password</label>
+                    <input type="password" id="password" required autocomplete="new-password" data-lpignore="true" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:border-emerald-500">
                 </div>
-                <div id="loginErrorMessage" class="text-rose-400 text-xs text-center hidden font-medium">Password salah atau ruangan belum dipilih!</div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition shadow-lg shadow-emerald-600/30">Masuk Ruangan</button>
+                <div id="loginErrorMessage" class="text-rose-400 text-xs text-center hidden font-medium">Username atau Password salah!</div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition shadow-lg shadow-emerald-600/30">Masuk Pengawas Ruangan</button>
             </form>
         </div>
     </div>
 
-    <!-- DASHBOARD PENGAWAS -->
+    <!-- DASHBOARD PENGAWAS RUANGAN (TANPA FORCE SUBMIT, TANPA IMPORT, TANPA JEDA/LANJUT) -->
     <div id="dashboardSection" class="hidden">
         <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50">
             <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="bg-emerald-600 p-2 rounded-lg"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+                    <div class="bg-emerald-600 p-2 rounded-lg"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></div>
                     <div>
-                        <h1 class="text-xl font-bold" id="headerRoomTitle">Dashboard Pengawas</h1>
-                        <p class="text-xs text-slate-400">Monitoring Siswa Terkunci & Pelanggaran</p>
+                        <h1 class="text-xl font-bold">Dashboard Pengawas Ruangan</h1>
+                        <p class="text-xs text-slate-400">Monitoring & Buka Kunci Siswa</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="logoutPengawas()" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-2 rounded-lg text-sm font-semibold transition">Keluar Ruangan</button>
+                    <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">Export Excel</button>
+                    <button onclick="logoutPengawas()" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">Logout</button>
                 </div>
             </div>
         </header>
 
         <main class="max-w-7xl mx-auto p-4 space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400 font-semibold uppercase">Siswa Terkunci di Ruangan Ini</p>
-                    <h3 id="statRoomLocked" class="text-3xl font-bold mt-1 text-amber-400">0</h3>
+                    <p class="text-xs text-slate-400 font-semibold uppercase">Total Pelanggaran</p>
+                    <h3 id="statTotalViolations" class="text-3xl font-bold mt-1 text-slate-100">0</h3>
                 </div>
                 <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400 font-semibold uppercase">Total Pelanggaran Ruangan</p>
-                    <h3 id="statRoomViolations" class="text-3xl font-bold mt-1 text-slate-100">0</h3>
+                    <p class="text-xs text-slate-400 font-semibold uppercase">Siswa Terkunci</p>
+                    <h3 id="statLockedStudents" class="text-3xl font-bold mt-1 text-amber-400">0</h3>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                    <p class="text-xs text-slate-400 font-semibold uppercase">Force Submitted</p>
+                    <h3 id="statForceSubmitted" class="text-3xl font-bold mt-1 text-emerald-400">0</h3>
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
-                <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama siswa di ruangan ini..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none w-full md:w-80">
-                <span id="currentRoomBadge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-lg text-xs font-semibold">Ruangan: -</span>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <!-- Pengawas Ruangan tetap bisa memfilter berdasarkan ruangan jika data sempat tersinkron/masuk dari log -->
+                    <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama siswa..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none w-full md:w-64">
+                </div>
             </div>
 
             <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-xl">
@@ -78,11 +87,11 @@
                     <table class="w-full text-left text-sm text-slate-300">
                         <thead class="bg-slate-950/50 text-slate-400 uppercase text-xs font-semibold">
                             <tr>
-                                <th class="p-4">#</th><th class="p-4">Nama Siswa</th><th class="p-4">Jenis Pelanggaran</th><th class="p-4">Jumlah</th><th class="p-4">Waktu</th><th class="p-4">Status</th><th class="p-4 text-center">Aksi Pengawas</th>
+                                <th class="p-4">#</th><th class="p-4">Nama Siswa</th><th class="p-4">Ruangan</th><th class="p-4">Jenis Pelanggaran</th><th class="p-4">Jumlah</th><th class="p-4">Waktu</th><th class="p-4">Status</th><th class="p-4 text-center">Aksi Pengawas</th>
                             </tr>
                         </thead>
                         <tbody id="violationTableBody" class="divide-y divide-slate-700/50">
-                            <tr><td colspan="7" class="p-8 text-center text-slate-500">Belum ada log pelanggaran di ruangan ini.</td></tr>
+                            <tr><td colspan="8" class="p-8 text-center text-slate-500">Belum ada log pelanggaran terdeteksi.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -91,77 +100,22 @@
     </div>
 
     <script>
-        const AUTH_PASS = "ruang123"; // Password standar untuk pengawas ruangan
-        let studentLogs = JSON.parse(localStorage.getItem('cbt_student_logs')) || {};
-        let studentRoomMap = JSON.parse(localStorage.getItem('cbt_room_map')) || {};
-        let currentAssignedRoom = localStorage.getItem('cbt_pengawas_room') || "";
-        let pubnub = null;
+        const AUTH_USER = "pengawas";
+        const AUTH_PASS = "ruangan123";
+        let studentLogs = {}, pubnub = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            populateLoginRoomDropdown();
-            if (localStorage.getItem('isPengawasLoggedIn') === 'true' && currentAssignedRoom) {
-                showDashboard();
-            } else {
-                showLogin();
-            }
+            if (localStorage.getItem('isRoomPengawasLoggedIn') === 'true') showDashboard();
+            else showLogin();
         });
 
-        function getCleanKey(nameStr) {
-            if (!nameStr) return "";
-            return nameStr
-                .split(' - ')[0]
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, '')
-                .trim();
-        }
-
-        function populateLoginRoomDropdown() {
-            const selectEl = document.getElementById('loginRoomSelect');
-            if (!selectEl) return;
-            
-            // Ambil daftar ruangan unik dari mapping maupun log yang ada
-            const rooms = new Set(Object.values(studentRoomMap));
-            Object.values(studentLogs).forEach(i => {
-                const lookupKey = getCleanKey(i.name);
-                const effectiveRoom = studentRoomMap[lookupKey] || i.room;
-                if (effectiveRoom) rooms.add(effectiveRoom);
-            });
-
-            selectEl.innerHTML = `<option value="">-- Pilih Ruangan --</option>`;
-            if (rooms.size === 0) {
-                selectEl.innerHTML += `<option value="Ruang Ujian Utama">Ruang Ujian Utama (Default)</option>`;
-            } else {
-                rooms.forEach(r => {
-                    selectEl.innerHTML += `<option value="${r}">${r}</option>`;
-                });
-            }
-        }
-
-        function showLogin() { 
-            document.getElementById('loginSection').classList.remove('hidden'); 
-            document.getElementById('dashboardSection').classList.add('hidden'); 
-            populateLoginRoomDropdown();
-        }
-
-        function showDashboard() { 
-            document.getElementById('loginSection').classList.add('hidden'); 
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            document.getElementById('headerRoomTitle').textContent = `Dashboard Pengawas - ${currentAssignedRoom}`;
-            document.getElementById('currentRoomBadge').textContent = `Ruangan: ${currentAssignedRoom}`;
-            initPubNub();
-            renderTable();
-            updateStats();
-        }
+        function showLogin() { document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('dashboardSection').classList.add('hidden'); }
+        function showDashboard() { document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden'); initPubNub(); }
 
         function handleLogin(e) {
             e.preventDefault();
-            const roomVal = document.getElementById('loginRoomSelect').value;
-            const passVal = document.getElementById('password').value.trim();
-
-            if (roomVal && passVal === AUTH_PASS) {
-                currentAssignedRoom = roomVal;
-                localStorage.setItem('cbt_pengawas_room', currentAssignedRoom);
-                localStorage.setItem('isPengawasLoggedIn', 'true');
+            if (document.getElementById('username').value.trim() === AUTH_USER && document.getElementById('password').value.trim() === AUTH_PASS) {
+                localStorage.setItem('isRoomPengawasLoggedIn', 'true');
                 showDashboard();
             } else {
                 document.getElementById('loginErrorMessage').classList.remove('hidden');
@@ -170,68 +124,40 @@
 
         function logoutPengawas() {
             if (confirm("Keluar dari Dashboard Pengawas Ruangan?")) {
-                localStorage.removeItem('isPengawasLoggedIn');
-                localStorage.removeItem('cbt_pengawas_room');
+                localStorage.removeItem('isRoomPengawasLoggedIn');
                 showLogin();
             }
         }
 
-        function saveData() {
-            localStorage.setItem('cbt_student_logs', JSON.stringify(studentLogs));
-        }
-
         function initPubNub() {
             if (typeof PubNub !== 'undefined' && !pubnub) {
-                pubnub = new PubNub({ publishKey: "pub-c-5618932f-1208-4f99-81ed-334268b10f87", subscribeKey: "sub-c-a8bf0e07-65d5-4794-8564-7567ee20e659", uuid: "pengawas_" + currentAssignedRoom });
+                pubnub = new PubNub({ publishKey: "pub-c-5618932f-1208-4f99-81ed-334268b10f87", subscribeKey: "sub-c-a8bf0e07-65d5-4794-8564-7567ee20e659", uuid: "room_supervisor" });
                 pubnub.subscribe({ channels: ["cbt_monitoring_channel"] });
-                pubnub.addListener({ message: (msg) => { 
-                    if (msg.message && msg.message.type === "VIOLATION") {
-                        handleIncomingViolation(msg.message);
-                    } 
-                } });
+                pubnub.addListener({ message: (msg) => { if (msg.message && msg.message.type === "VIOLATION") handleIncomingViolation(msg.message); } });
             }
         }
 
         function handleIncomingViolation(data) {
-            const rawName = data.studentName || "";
-            const cleanName = rawName.split(' - ')[0].trim().replace(/\s+/g, ' ');
-            const lookupKey = getCleanKey(cleanName);
-            const assignedRoom = studentRoomMap[lookupKey] || data.roomName || "Ruang Ujian";
-
-            if (!studentLogs[cleanName]) {
-                studentLogs[cleanName] = { name: cleanName, room: assignedRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
+            const sName = data.studentName;
+            if (!studentLogs[sName]) {
+                studentLogs[sName] = { name: sName, room: "Ruang Ujian", reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
             } else {
-                studentLogs[cleanName].room = assignedRoom;
-                studentLogs[cleanName].reason = data.reason;
-                studentLogs[cleanName].count = data.count;
-                studentLogs[cleanName].time = data.timestamp;
-                if (studentLogs[cleanName].status !== "FORCE_SUBMITTED") studentLogs[cleanName].status = "LOCKED";
+                studentLogs[sName].reason = data.reason;
+                studentLogs[sName].count = data.count;
+                studentLogs[sName].time = data.timestamp;
+                if (studentLogs[sName].status !== "FORCE_SUBMITTED") studentLogs[sName].status = "LOCKED";
             }
-            saveData();
-            renderTable();
-            updateStats();
+            updateStats(); renderTable();
         }
 
         function renderTable() {
             const tbody = document.getElementById('violationTableBody');
             if (!tbody) return;
             const searchVal = document.getElementById('searchInput').value.toLowerCase();
-
-            // Ambil data terbaru dari localStorage agar sinkron jika ada update dari proctor utama
-            studentLogs = JSON.parse(localStorage.getItem('cbt_student_logs')) || {};
-
-            const logsArray = Object.values(studentLogs).filter(i => {
-                const lookupKey = getCleanKey(i.name);
-                const effectiveRoom = studentRoomMap[lookupKey] || i.room || "Ruang Ujian Utama";
-                i.room = effectiveRoom;
-
-                const matchRoom = (effectiveRoom.toLowerCase() === currentAssignedRoom.toLowerCase());
-                const matchSearch = i.name.toLowerCase().includes(searchVal);
-                return matchRoom && matchSearch;
-            });
+            const logsArray = Object.values(studentLogs).filter(i => i.name.toLowerCase().includes(searchVal));
 
             if (logsArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">Belum ada log pelanggaran di ruangan ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500">Belum ada log pelanggaran terdeteksi.</td></tr>`;
                 return;
             }
 
@@ -239,6 +165,7 @@
                 <tr class="hover:bg-slate-800/50 transition">
                     <td class="p-4 font-mono text-slate-500">${index + 1}</td>
                     <td class="p-4 font-semibold text-slate-100">${item.name}</td>
+                    <td class="p-4"><span class="bg-slate-900 px-2 py-1 rounded text-xs border border-slate-700">${item.room}</span></td>
                     <td class="p-4 text-slate-300">${item.reason}</td>
                     <td class="p-4 font-bold text-red-400">${item.count}x</td>
                     <td class="p-4 font-mono text-xs text-slate-400">${item.time}</td>
@@ -251,36 +178,23 @@
         }
 
         function unlockStudent(name) {
-            if (pubnub) {
-                pubnub.publish({ channel: "cbt_monitoring_channel", message: { type: "REMOTE_UNLOCK_COMMAND", targetStudent: name } });
-            }
-            if (studentLogs[name]) {
-                studentLogs[name].status = "ACTIVE";
-                saveData();
-                renderTable();
-                updateStats();
-            }
+            if (pubnub) pubnub.publish({ channel: "cbt_monitoring_channel", message: { type: "REMOTE_UNLOCK_COMMAND", targetStudent: name } });
+            if (studentLogs[name]) { studentLogs[name].status = "ACTIVE"; updateStats(); renderTable(); }
         }
 
         function updateStats() {
-            studentLogs = JSON.parse(localStorage.getItem('cbt_student_logs')) || {};
-            const roomLogs = Object.values(studentLogs).filter(i => {
-                const lookupKey = getCleanKey(i.name);
-                const effectiveRoom = studentRoomMap[lookupKey] || i.room || "Ruang Ujian Utama";
-                return effectiveRoom.toLowerCase() === currentAssignedRoom.toLowerCase();
-            });
-
-            document.getElementById('statRoomLocked').textContent = roomLogs.filter(i => i.status === "LOCKED").length;
-            document.getElementById('statRoomViolations').textContent = roomLogs.reduce((acc, curr) => acc + curr.count, 0);
+            document.getElementById('statTotalViolations').textContent = Object.values(studentLogs).reduce((acc, curr) => acc + curr.count, 0);
+            document.getElementById('statLockedStudents').textContent = Object.values(studentLogs).filter(i => i.status === "LOCKED").length;
+            document.getElementById('statForceSubmitted').textContent = Object.values(studentLogs).filter(i => i.status === "FORCE_SUBMITTED").length;
         }
 
-        // Sinkronisasi otomatis periodik setiap 2 detik untuk memastikan data dari localStorage selalu segar
-        setInterval(() => {
-            if (localStorage.getItem('isPengawasLoggedIn') === 'true') {
-                renderTable();
-                updateStats();
-            }
-        }, 2000);
+        function exportToExcel() {
+            const data = Object.values(studentLogs).map((i, idx) => ({ "No": idx + 1, "Nama Siswa": i.name, "Ruangan": i.room, "Pelanggaran": i.reason, "Jumlah": i.count, "Waktu": i.time, "Status": i.status }));
+            if (!data.length) { alert("Tidak ada data!"); return; }
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Log");
+            XLSX.writeFile(wb, "Log_Pelanggaran_Pengawas_Ruangan.xlsx");
+        }
     </script>
 </body>
 </html>
