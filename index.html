@@ -50,8 +50,12 @@
                         <p class="text-xs text-slate-400">Monitoring & Buka Kunci Siswa</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">Export Excel</button>
+                    <label class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 cursor-pointer transition">
+                        Import Ruangan
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importExcelRuangan(event)">
+                    </label>
                     <button onclick="logoutPengawas()" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">Logout</button>
                 </div>
             </div>
@@ -104,6 +108,7 @@
         const AUTH_USER = "pengawas";
         const AUTH_PASS = "ruangan123";
         let studentLogs = JSON.parse(localStorage.getItem('cbt_student_logs')) || {};
+        let studentRoomMap = JSON.parse(localStorage.getItem('cbt_room_map')) || {};
         let pubnub = null;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -142,6 +147,7 @@
 
         function saveData() {
             localStorage.setItem('cbt_student_logs', JSON.stringify(studentLogs));
+            localStorage.setItem('cbt_room_map', JSON.stringify(studentRoomMap));
         }
 
         function initPubNub() {
@@ -154,11 +160,12 @@
 
         function handleIncomingViolation(data) {
             const sName = data.studentName;
-            const sRoom = data.roomName || "Ruang Ujian";
+            const assignedRoom = studentRoomMap[sName.toLowerCase()] || data.roomName || "Ruang Ujian";
 
             if (!studentLogs[sName]) {
-                studentLogs[sName] = { name: sName, room: sRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
+                studentLogs[sName] = { name: sName, room: assignedRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
             } else {
+                studentLogs[sName].room = assignedRoom;
                 studentLogs[sName].reason = data.reason;
                 studentLogs[sName].count = data.count;
                 studentLogs[sName].time = data.timestamp;
@@ -173,7 +180,10 @@
         function rebuildRoomDropdown() {
             const selectEl = document.getElementById('roomFilter');
             const currentVal = selectEl.value;
-            const rooms = new Set(Object.values(studentLogs).map(i => i.room));
+            
+            // Ambil ruangan dari mapping Excel DAN dari log yang sudah masuk
+            const rooms = new Set(Object.values(studentRoomMap));
+            Object.values(studentLogs).forEach(i => { if (i.room) rooms.add(i.room); });
             
             selectEl.innerHTML = `<option value="ALL">Semua Ruangan</option>`;
             rooms.forEach(r => selectEl.innerHTML += `<option value="${r}">${r}</option>`);
@@ -187,8 +197,11 @@
             const roomVal = document.getElementById('roomFilter').value;
 
             const logsArray = Object.values(studentLogs).filter(i => {
+                const effectiveRoom = studentRoomMap[i.name.toLowerCase()] || i.room || "Ruang Ujian";
+                i.room = effectiveRoom; // Sinkronkan property ruangan
+                
                 const matchSearch = i.name.toLowerCase().includes(searchVal);
-                const matchRoom = (roomVal === "ALL" || i.room === roomVal);
+                const matchRoom = (roomVal === "ALL" || effectiveRoom === roomVal);
                 return matchSearch && matchRoom;
             });
 
@@ -222,6 +235,40 @@
             document.getElementById('statTotalViolations').textContent = Object.values(studentLogs).reduce((acc, curr) => acc + curr.count, 0);
             document.getElementById('statLockedStudents').textContent = Object.values(studentLogs).filter(i => i.status === "LOCKED").length;
             document.getElementById('statForceSubmitted').textContent = Object.values(studentLogs).filter(i => i.status === "FORCE_SUBMITTED").length;
+        }
+
+        function importExcelRuangan(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                const rooms = new Set();
+                let count = 0;
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row && row[0] && row[1]) {
+                        const sNameKey = row[0].toString().trim().toLowerCase();
+                        const sRoomName = row[1].toString().trim();
+                        studentRoomMap[sNameKey] = sRoomName;
+                        rooms.add(sRoomName);
+                        
+                        Object.keys(studentLogs).forEach(k => {
+                            if (k.toLowerCase() === sNameKey) {
+                                studentLogs[k].room = sRoomName;
+                            }
+                        });
+                        count++;
+                    }
+                }
+                saveData();
+                rebuildRoomDropdown();
+                updateStats();
+                renderTable();
+                alert(`Berhasil impor ${count} siswa & ${rooms.size} ruangan di Pengawas! Data sekarang sinkron.`);
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         function exportToExcel() {
