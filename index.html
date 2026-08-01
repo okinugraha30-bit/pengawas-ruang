@@ -159,25 +159,28 @@
         }
 
         function handleIncomingViolation(data) {
-            const rawName = data.studentName || "";
-            const cleanName = rawName.split(' - ')[0].trim();
-            const lookupKey = cleanName.toLowerCase();
-            
-            const assignedRoom = studentRoomMap[lookupKey] || data.roomName || "Ruang Ujian";
+    const rawName = data.studentName || "";
+    // Bersihkan nama secara total dari " - (Log out)" atau status sejenis
+    const cleanName = rawName.split(' - ')[0].trim();
+    const lookupKey = cleanName.toLowerCase();
+    
+    // Ambil ruangan dari map excel, atau fallback ke data, atau "Ruang Ujian"
+    const assignedRoom = studentRoomMap[lookupKey] || data.roomName || "Ruang Ujian";
 
-            if (!studentLogs[rawName]) {
-                studentLogs[rawName] = { name: rawName, room: assignedRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
-            } else {
-                studentLogs[rawName].room = assignedRoom;
-                studentLogs[rawName].reason = data.reason;
-                studentLogs[rawName].count = data.count;
-                studentLogs[rawName].time = data.timestamp;
-                if (studentLogs[rawName].status !== "FORCE_SUBMITTED") studentLogs[rawName].status = "LOCKED";
-            }
-            saveData();
-            rebuildRoomDropdown();
-            updateStats(); 
-            renderTable();
+    // Simpan menggunakan cleanName sebagai key agar rapi dan tidak duplikat
+    if (!studentLogs[cleanName]) {
+        studentLogs[cleanName] = { name: cleanName, room: assignedRoom, reason: data.reason, count: data.count, time: data.timestamp, status: "LOCKED" };
+    } else {
+        studentLogs[cleanName].room = assignedRoom;
+        studentLogs[cleanName].reason = data.reason;
+        studentLogs[cleanName].count = data.count;
+        studentLogs[cleanName].time = data.timestamp;
+        if (studentLogs[cleanName].status !== "FORCE_SUBMITTED") studentLogs[cleanName].status = "LOCKED";
+    }
+    saveData();
+    rebuildRoomDropdown();
+    updateStats(); 
+    renderTable();
         }
 
         function rebuildRoomDropdown() {
