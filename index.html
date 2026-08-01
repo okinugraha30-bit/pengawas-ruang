@@ -10,7 +10,7 @@
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen" translate="no">
+<body class="bg-slate-900 text-slate-100 min-h-screen select-none" translate="no" oncontextmenu="return false;">
 
     <!-- LOGIN PENGAWAS -->
     <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
@@ -216,7 +216,6 @@
             if (!tbody) return;
             const searchVal = document.getElementById('searchInput').value.toLowerCase();
 
-            // Refresh data dari localStorage agar sinkron dengan proktor utama & map ruangan terbaru
             studentLogs = JSON.parse(localStorage.getItem('cbt_student_logs')) || {};
             studentRoomMap = JSON.parse(localStorage.getItem('cbt_room_map')) || {};
 
@@ -276,7 +275,6 @@
             document.getElementById('statRoomViolations').textContent = roomLogs.reduce((acc, curr) => acc + curr.count, 0);
         }
 
-        // Sinkronisasi periodik otomatis setiap 2 detik dengan data proktor utama & map ruangan
         setInterval(() => {
             if (localStorage.getItem('isPengawasLoggedIn') === 'true') {
                 renderTable();
