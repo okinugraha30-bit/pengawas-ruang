@@ -22,7 +22,7 @@
                 <h2 class="text-2xl font-bold text-slate-100">Login Pengawas Ruangan</h2>
                 <p class="text-xs text-slate-400">Monitoring Real-Time Ujian Siswa</p>
             </div>
-            <form onsubmit="handleLogin(event)" class="space-y-4" autocomplete="off">
+            <form onsubmit="handleLogin(event); return false;" method="POST" class="space-y-4">
                 <input type="text" style="display:none" name="fakeusernameremembered">
                 <input type="password" style="display:none" name="fakepasswordremembered">
                 <div>
